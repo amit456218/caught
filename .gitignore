@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+*.sqlite3*
+
+# pretrained weights are downloaded on first run (caught models)
+models/*.task
+models/*.pt
+
+# backtesting media is fetched with bench/fetch.py; labels and sources are versioned
+bench/videos/
+bench/commons/*.jpg
+bench/all/*.mp4
+bench/all/*.jpg
+bench/all/trace_*.csv
+bench/all/results.json
+bench/*.jpg
