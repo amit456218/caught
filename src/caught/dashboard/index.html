@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caught</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --wash:rgba(11,11,11,.04);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --other:#b3b1aa; --good:#006300; --bad:#d03b3b; --accent:#2a78d6;
+  --seq1:#cde2fb; --seq2:#9ec5f4; --seq3:#6da7ec; --seq4:#3987e5; --seq5:#256abf; --seq6:#184f95; --seq7:#0d366b;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --other:#5a5955; --good:#0ca30c; --bad:#e66767; --accent:#3987e5;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --other:#5a5955; --good:#0ca30c; --bad:#e66767; --accent:#3987e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding-block:0 40px}
+header{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--grid);background:var(--surface);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{font-weight:600;font-size:16px;letter-spacing:.2px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--ink-2)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.on .dot{background:var(--good)} .pill.away .dot{background:var(--s4)} .pill.err .dot{background:var(--bad)}
+nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--ink-2);padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}
+nav button.active{background:var(--wash);color:var(--ink);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:20px 24px}
+.filters{display:flex;gap:10px;align-items:center;margin:0 0 18px;flex-wrap:wrap}
+.filters input,.filters select,button.btn,input[type=number]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px}
+button.btn{cursor:pointer} button.btn:hover{background:var(--wash)} button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.btn.ghost{border-color:transparent}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 12px;text-transform:uppercase;letter-spacing:.4px}
+.card h2 .sub{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
+.hero{font-size:56px;font-weight:600;line-height:1;margin:6px 0 4px}
+.hero-sub{color:var(--ink-2);margin:0 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.tile .label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tile .value{font-size:24px;font-weight:600;margin:2px 0}
+.tile .delta{font-size:12px;color:var(--ink-2)} .delta.up{color:var(--bad)} .delta.down{color:var(--good)}
+.meter{height:5px;border-radius:3px;background:var(--seq1);margin-top:8px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--seq5);border-radius:3px}
+.meter.over i{background:var(--bad)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+svg{display:block;max-width:100%;overflow:visible}
+svg text{fill:var(--ink-2);font-size:11px;font-family:inherit} svg .tick{fill:var(--muted);font-variant-numeric:tabular-nums}
+svg .grid{stroke:var(--grid);stroke-width:1} svg .axis{stroke:var(--axis);stroke-width:1}
+.tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:20;display:none;max-width:260px}
+.tip b{font-size:13px} .tip .k{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:6px}
+.small-multiples{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.sm h3{font-size:12px;font-weight:500;margin:0 0 4px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.sm .v{font-size:18px;font-weight:600;margin-bottom:2px}
+table.tbl{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:13px}
+.tbl th,.tbl td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--grid)} .tbl th{color:var(--muted);font-weight:500;font-size:12px} .tbl td.n,.tbl th.n{text-align:right}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.rv{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface)}
+.rv .strip{display:flex;gap:4px;overflow-x:auto;margin:8px 0} .rv .strip img{height:72px;border-radius:4px;background:var(--wash)}
+.rv .meta{font-size:12px;color:var(--muted)} .rv .actions{display:flex;gap:6px;margin-top:8px}
+.rv.focus{outline:2px solid var(--accent)}
+.live{display:grid;grid-template-columns:minmax(280px,1.2fr) minmax(260px,1fr);gap:16px}
+.live img{width:100%;border-radius:8px;background:var(--wash);aspect-ratio:16/9;object-fit:cover}
+.scores .row{display:grid;grid-template-columns:150px 1fr 44px;align-items:center;gap:10px;padding:4px 0;font-size:13px}
+.scores .row .n{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.scores .row.active{color:var(--ink);font-weight:600}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;color:var(--ink-2)} .kv b{color:var(--ink);font-weight:500}
+.muted{color:var(--muted)} .hidden{display:none!important}
+.settings label{display:flex;align-items:center;gap:10px;padding:6px 0}
+.goals{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 20px}
+.goals label{justify-content:space-between} .goals input{width:80px}
+.streaks{display:flex;gap:10px;flex-wrap:wrap} .streak{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+.streak b{font-size:16px;margin-right:4px}
+blockquote{margin:12px 0 0;padding:12px 16px;border-left:3px solid var(--accent);background:var(--wash);white-space:pre-line;border-radius:0 6px 6px 0}
+.progress{height:6px;background:var(--seq1);border-radius:3px;overflow:hidden;margin-top:8px}.progress i{display:block;height:100%;background:var(--good)}
+.toggle-tbl{float:right;font-size:12px}
+.home{display:grid;grid-template-columns:minmax(300px,1.3fr) minmax(260px,1fr);gap:16px}
+.home .full{grid-column:1/-1}
+.setup li{margin:6px 0} .setup .ok{color:var(--good)} .setup code{background:var(--wash);padding:1px 6px;border-radius:4px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0} .presets button{min-width:64px}
+.timer{font-size:56px;font-weight:600;line-height:1;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.timer-sub{color:var(--ink-2)}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:12px}
+.stat .l{font-size:12px;color:var(--muted)} .stat .v{font-size:22px;font-weight:600}
+.score{display:flex;align-items:baseline;gap:10px} .score .n{font-size:56px;font-weight:600;line-height:1} .score .w{font-size:14px;color:var(--ink-2)}
+.bd{margin-top:10px} .bd .row{display:grid;grid-template-columns:150px 1fr 50px;gap:10px;align-items:center;font-size:12px;padding:3px 0}
+.bd .row .n{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.sess{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--grid);font-size:13px}
+.sess:last-child{border-bottom:0} .sess .chip{font-weight:600;font-variant-numeric:tabular-nums;padding:2px 8px;border-radius:999px;background:var(--wash)}
+.sess .m{color:var(--muted);font-size:12px}
+.fix{padding:10px 14px;border-left:3px solid var(--accent);background:var(--wash);border-radius:0 6px 6px 0;margin-top:12px}
+.callout{padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--wash);font-size:13px;color:var(--ink-2)}
+@media (max-width:720px){ .home{grid-template-columns:1fr} }
+@media (max-width:720px){ .live{grid-template-columns:1fr} .scores .row{grid-template-columns:110px 1fr 40px} header{padding:12px 16px} main{padding:16px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Caught</div>
+  <div class="pill" id="pill"><span class="dot"></span><span id="pillText">connecting…</span></div>
+  <nav id="nav">
+    <button data-tab="home" class="active">Home</button>
+    <button data-tab="today">Today</button>
+    <button data-tab="week">Week</button>
+    <button data-tab="review">Review <span id="reviewCount" class="muted"></span></button>
+    <button data-tab="live">Live</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+</header>
+<main>
+  <!-- HOME -->
+  <section id="tab-home">
+    <div class="card setup hidden" id="setupCard">
+      <h2>Get set up <span class="sub">two minutes, once</span></h2>
+      <ol id="setupList" style="margin:0;padding-left:20px"></ol>
+    </div>
+    <div class="home">
+      <div class="card" id="sessionCard">
+        <h2>Focus session <span class="sub" id="sessionSub"></span></h2>
+        <div id="sessionBody"></div>
+      </div>
+      <div class="card" id="todayCard">
+        <h2>Today <span class="sub">since you first sat down</span></h2>
+        <div id="todayBody"></div>
+      </div>
+      <div class="card full" id="recentCard">
+        <h2>Recent sessions</h2>
+        <div id="recentBody"></div>
+      </div>
+    </div>
+    <details class="callout" style="margin-top:4px"><summary>What this is and what it keeps</summary>
+      <p style="margin:8px 0 0">The camera watches your desk and notes when you pick up your phone, stare at your lap, slouch, chew your nails, rub your eyes, yawn, doze, fidget, eat, drink, look away, or leave. Nothing leaves this computer and no video is ever saved. Only episodes the system is unsure about keep a strip of tiny thumbnails so you can confirm or reject them in Review, which is how it learns you specifically. Start a focus session before you study and it scores that stretch when you stop.</p>
+    </details>
+  </section>
+
+  <!-- TODAY -->
+  <section id="tab-today" class="hidden">
+    <div class="filters">
+      <button class="btn ghost" id="dayPrev">‹</button>
+      <input type="date" id="dayPick">
+      <button class="btn ghost" id="dayNext">›</button>
+      <button class="btn ghost" id="dayToday">Today</button>
+    </div>
+    <div class="card">
+      <h2>Time in logged habits<span class="sub" id="heroDate"></span></h2>
+      <p class="hero" id="heroValue">–</p>
+      <p class="hero-sub" id="heroSub"></p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <div class="card" style="margin-top:16px">
+      <h2>Timeline <span class="sub">hover an episode for details</span>
+        <button class="btn ghost toggle-tbl" id="tlToggle">table</button></h2>
+      <div id="timeline"></div>
+      <div id="timelineTable" class="hidden"></div>
+      <div class="legend" id="tlLegend"></div>
+    </div>
+  </section>
+
+  <!-- WEEK -->
+  <section id="tab-week" class="hidden">
+    <div class="filters">
+      <label class="muted">Week ending</label>
+      <input type="date" id="weekEnd">
+      <label class="muted" style="margin-left:10px">Heatmap habit</label>
+      <select id="heatHabit"></select>
+      <button class="btn" id="reportBtn" style="margin-left:auto">Build weekly report</button>
+    </div>
+    <div class="card">
+      <h2>The chart <span class="sub">minutes this week, by habit</span>
+        <button class="btn ghost toggle-tbl" id="chartToggle">table</button></h2>
+      <div id="theChart"></div><div id="theChartTable" class="hidden"></div>
+      <p class="muted" id="chartNote" style="margin:8px 0 0"></p>
+    </div>
+    <div class="card">
+      <h2>Per day <span class="sub">each panel is one habit; hairline is your daily goal</span></h2>
+      <div class="small-multiples" id="smallMultiples"></div>
+    </div>
+    <div class="card">
+      <h2>When it happens <span class="sub" id="heatTitle"></span></h2>
+      <div id="heatmap"></div>
+    </div>
+    <div class="card">
+      <h2>Streaks <span class="sub">consecutive days under goal</span></h2>
+      <div class="streaks" id="streaks"></div>
+    </div>
+    <div class="card hidden" id="reportCard">
+      <h2>Weekly report</h2>
+      <div id="reportBody"></div>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section id="tab-review" class="hidden">
+    <div class="filters">
+      <span class="muted" id="labelStats"></span>
+      <span class="muted" style="margin-left:auto">keys: <b>y</b> yes · <b>n</b> no · <b>s</b> skip</span>
+      <button class="btn" id="trainBtn">Train model now</button>
+    </div>
+    <div class="card">
+      <h2>Was it really that? <span class="sub">the model asks about the episodes it is least sure of</span></h2>
+      <div class="review-grid" id="reviewGrid"></div>
+      <p class="muted" id="reviewEmpty" style="margin:0">Nothing to review right now.</p>
+    </div>
+    <div class="card">
+      <h2>Model</h2>
+      <div class="kv" id="modelInfo"></div>
+    </div>
+  </section>
+
+  <!-- LIVE -->
+  <section id="tab-live" class="hidden">
+    <div class="filters">
+      <button class="btn" id="pauseBtn">Pause</button>
+      <button class="btn" id="calBtn">Calibrate posture (10s)</button>
+      <span class="muted" id="calText"></span>
+    </div>
+    <div class="live">
+      <div class="card"><h2>What it sees <span class="sub">local only, never stored</span></h2>
+        <img id="preview" alt="live preview" class="hidden">
+        <p class="muted" id="previewMsg" style="margin:0">Camera is not running.</p>
+        <div class="progress hidden" id="calProgress"><i style="width:0"></i></div>
+      </div>
+      <div class="card scores"><h2>Right now</h2><div id="scores"></div>
+        <div class="kv" id="liveKv" style="margin-top:12px"></div></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="hidden">
+    <div class="card settings">
+      <h2>Privacy</h2>
+      <label><input type="checkbox" id="setClips"> Keep tiny thumbnail strips of uncertain episodes for the review queue (local only)</label>
+      <label><input type="checkbox" id="setPreview"> Show the live preview in this dashboard</label>
+      <label><input type="checkbox" id="setNotif"> macOS notifications when a phone or slouch episode starts</label>
+      <label><input type="checkbox" id="setRoast"> Let Claude write the weekly paragraph (sends weekly totals only, needs an Anthropic credential)</label>
+      <label>Learned-model weight <input type="range" id="setBlend" min="0" max="1" step="0.05"> <span id="blendVal"></span></label>
+      <label>Keep features and clips for <input type="number" id="setRetention" min="1" max="365" style="width:70px"> days</label>
+    </div>
+    <div class="card settings">
+      <h2>Daily goals <span class="sub">minutes for duration habits, count for the rest</span></h2>
+      <div class="goals" id="goals"></div>
+    </div>
+    <div class="filters">
+      <button class="btn primary" id="saveSettings">Save</button>
+      <span class="muted" id="saveMsg"></span>
+      <button class="btn" id="wipeBtn" style="margin-left:auto">Delete all data…</button>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+(() => {
+const $ = (s) => document.querySelector(s);
+const SLOT = {phone:'--s1', looking_down:'--s2', slouch:'--s3', hand_to_face:'--s4', looking_away:'--s5', drink:'--s6', eat:'--s7', absent:'--s8'};
+const colorOf = (k) => `var(${SLOT[k] || '--other'})`;
+const ORDER = ['phone','looking_down','slouch','hand_to_face','looking_away','drink','eat','eye_rub','yawn','drowsy','restless','absent'];
+let HABITS = {}, status = {}, tab = 'home', dayDate = todayISO(), weekEndDate = todayISO(), heatHabitKey = 'phone';
+let homeTimer = null, lastSummary = null;
+let lastWeek = null, lastDay = null, reviewFocus = 0;
+
+function todayISO(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function shiftDay(iso, n){ const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y, m-1, d+n); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
+function fmtMin(m){ if (m < 1) return m <= 0 ? '0m' : '<1m'; const h = Math.floor(m/60), mm = Math.round(m%60); return h ? `${h}h ${String(mm).padStart(2,'0')}m` : `${mm}m`; }
+function fmtDelta(d, isDur){ if (Math.abs(d) < (isDur ? 1 : 0.5)) return 'same'; const sign = d > 0 ? '+' : '−'; return sign + (isDur ? fmtMin(Math.abs(d)) : Math.abs(Math.round(d))); }
+function fmtDur(s){ return s < 60 ? `${Math.round(s)}s` : fmtMin(s/60); }
+function fmtTime(ts){ const d = new Date(ts*1000); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function dayName(iso){ const [y,m,d] = iso.split('-').map(Number); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(y,m-1,d).getDay()]; }
+function el(tag, attrs={}, ...kids){ const e = document.createElement(tag); for (const [k,v] of Object.entries(attrs)) { if (k==='class') e.className = v; else if (k==='style') e.style.cssText = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); } for (const k of kids) e.append(k); return e; }
+function svgEl(tag, attrs={}){ const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v); return e; }
+async function api(path, opts){ const r = await fetch(path, opts); if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); }
+async function post(path, body){ return api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}); }
+
+// ---------- tooltip ----------
+const tip = $('#tip');
+function showTip(ev, rows){ tip.replaceChildren(); for (const r of rows) { const d = el('div'); if (r.color) d.append(el('span', {class:'k', style:`background:${r.color}`})); if (r.b) d.append(el('b', {}, r.b), ' '); d.append(r.t || ''); tip.append(d);} tip.style.display = 'block'; moveTip(ev); }
+function moveTip(ev){ const x = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8), y = Math.min(ev.clientY + 14, innerHeight - tip.offsetHeight - 8); tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+function hideTip(){ tip.style.display = 'none'; }
+function hover(node, rowsFn){ node.addEventListener('pointerenter', (e) => showTip(e, rowsFn())); node.addEventListener('pointermove', moveTip); node.addEventListener('pointerleave', hideTip); node.setAttribute('tabindex', '0'); node.addEventListener('focus', (e) => { const r = node.getBoundingClientRect(); showTip({clientX:r.left, clientY:r.bottom}, rowsFn()); }); node.addEventListener('blur', hideTip); }
+
+// ---------- tabs ----------
+$('#nav').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; setTab(b.dataset.tab); });
+function setTab(t){ tab = t; for (const b of $('#nav').children) b.classList.toggle('active', b.dataset.tab === t); for (const s of document.querySelectorAll('main > section')) s.classList.toggle('hidden', s.id !== 'tab-' + t); refresh(); }
+
+// ---------- status ----------
+async function pollStatus(){
+  try { status = await api('/api/status'); } catch { status = {running:false, error:'dashboard cannot reach the server'}; }
+  const pill = $('#pill'); pill.className = 'pill';
+  let txt;
+  if (status.error && !status.running) { pill.classList.add('err'); txt = 'camera not running'; }
+  else if (!status.running) { txt = 'camera off · history only'; }
+  else if (status.paused) { txt = 'paused'; }
+  else if (status.calibrating) { pill.classList.add('on'); txt = 'calibrating…'; }
+  else if (status.present) { pill.classList.add('on'); const act = Object.entries(status.habits||{}).filter(([k,v]) => v.active && k !== 'absent').map(([k]) => HABITS[k]?.icon || k); txt = `watching · ${status.fps} fps${act.length ? ' · ' + act.join(' ') : ''}`; }
+  else { pill.classList.add('away'); txt = 'nobody at the desk'; }
+  $('#pillText').textContent = txt;
+  const pend = status.labels?.pending || 0; $('#reviewCount').textContent = pend ? `(${pend})` : '';
+  if (tab === 'live') renderLive();
+}
+
+// ---------- home ----------
+function scoreWord(sc){ return sc >= 85 ? 'focused' : sc >= 65 ? 'mostly focused' : sc >= 45 ? 'scattered' : 'rough'; }
+function fmtClock(min){ const s = Math.max(0, Math.round(min * 60)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+function breakdown(sum){ const bd = el('div', {class:'bd'}); const mx = Math.max(1, ...sum.breakdown.map(b => b.penalty)); for (const b of sum.breakdown.slice(0,5)) bd.append(el('div', {class:'row'}, el('span', {}, el('span', {class:'sw', style:`background:${colorOf(b.habit)};margin-right:6px`}), b.label), el('div', {class:'meter'}, el('i', {style:`width:${Math.round(b.penalty/mx*100)}%`})), el('span', {class:'n'}, `−${Math.round(b.penalty)}`))); if (!sum.breakdown.length) bd.append(el('p', {class:'muted', style:'margin:6px 0 0'}, 'Nothing logged. Clean.')); return bd; }
+function summaryCard(sum, title){ const c = el('div'); c.append(el('div', {class:'score'}, el('span', {class:'n'}, String(sum.score)), el('span', {class:'w'}, `${scoreWord(sum.score)} · ${title}`))); const st = el('div', {class:'stat-row'}); const stats = [['Phone pickups', String(sum.phone_pickups)], ['On the phone', fmtMin(sum.phone_minutes)], ['Longest clean stretch', fmtMin(sum.longest_clean_minutes)], ['Distractions', String(sum.distractions)]]; for (const [l, v] of stats) st.append(el('div', {class:'stat'}, el('div', {class:'l'}, l), el('div', {class:'v'}, v))); c.append(st); c.append(breakdown(sum)); if (sum.fix_first_label) c.append(el('div', {class:'fix'}, el('b', {}, 'Fix first: '), sum.fix_first_label.toLowerCase(), sum.per_habit && sum.per_habit[sum.fix_first] ? ` · ${HABITS[sum.fix_first]?.kind === 'duration' ? fmtMin(sum.per_habit[sum.fix_first].minutes) : sum.per_habit[sum.fix_first].count + '×'}` : '')); return c; }
+async function loadHome(){
+  const h = await api('/api/home');
+  // setup checklist
+  const r = h.ready; const items = [];
+  if (!r.camera_running) items.push(['no', 'Start the camera: run ', el('code', {}, 'uv run caught run --open'), ' in a terminal. macOS asks for camera permission the first time.']);
+  else items.push(['ok', 'Camera running' + (r.present ? ', it can see you.' : '. Sit in front of it.')]);
+  if (!r.calibrated) items.push(['no', 'Calibrate your posture: sit upright, then ', el('button', {class:'btn', onclick: async () => { await post('/api/calibrate', {seconds: 10}); setTab('live'); }}, 'Calibrate (10 s)'), r.camera_running ? '' : ' (needs the camera running).']);
+  else items.push(['ok', r.calibration_auto ? 'Posture baseline set automatically from your first minutes. A real calibration is better: ' : 'Posture calibrated.', r.calibration_auto ? el('button', {class:'btn ghost', onclick: async () => { await post('/api/calibrate', {seconds: 10}); setTab('live'); }}, 'Calibrate') : '']);
+  if (r.pending_reviews > 0) items.push(['todo', `${r.pending_reviews} episodes to confirm in `, el('button', {class:'btn ghost', onclick: () => setTab('review')}, 'Review'), ' so it learns your habits.']);
+  const needs = items.some(i => i[0] === 'no');
+  $('#setupCard').classList.toggle('hidden', !needs && r.pending_reviews < 8);
+  const ul = $('#setupList'); ul.replaceChildren(); for (const [k, ...rest] of items) { const li = el('li', {class: k === 'ok' ? 'ok' : ''}); li.append(k === 'ok' ? '✓ ' : k === 'todo' ? '• ' : '→ ', ...rest); ul.append(li); }
+  // session
+  const body = $('#sessionBody'); body.replaceChildren();
+  if (h.session) {
+    const s = h.session, sum = s.summary;
+    $('#sessionSub').textContent = s.label ? s.label : 'running';
+    body.append(el('div', {class:'timer'}, fmtClock(sum.elapsed_minutes)), el('div', {class:'timer-sub'}, sum.remaining_minutes > 0 ? `${fmtClock(sum.remaining_minutes)} left of ${s.planned_minutes} min` : `over the planned ${s.planned_minutes} min`));
+    const st = el('div', {class:'stat-row'}); for (const [l, v] of [['Score so far', String(sum.score)], ['Phone pickups', String(sum.phone_pickups)], ['On the phone', fmtMin(sum.phone_minutes)], ['Clean for', fmtMin(sum.clean_for_minutes)]]) st.append(el('div', {class:'stat'}, el('div', {class:'l'}, l), el('div', {class:'v'}, v))); body.append(st);
+    if (h.active.filter(k => k !== 'absent').length) body.append(el('p', {class:'muted', style:'margin:10px 0 0'}, 'Right now: ' + h.active.filter(k => k !== 'absent').map(k => HABITS[k].label.toLowerCase()).join(', ')));
+    body.append(el('div', {class:'presets', style:'margin-top:14px'}, el('button', {class:'btn primary', onclick: async () => { const d = await post('/api/session/end'); lastSummary = d; loadHome(); }}, 'End session')));
+  } else if (lastSummary && lastSummary.summary) {
+    $('#sessionSub').textContent = 'finished';
+    body.append(summaryCard(lastSummary.summary, `${lastSummary.label || 'session'} · ${fmtMin(lastSummary.summary.minutes)}`));
+    body.append(el('div', {class:'presets', style:'margin-top:14px'}, el('button', {class:'btn primary', onclick: () => { lastSummary = null; loadHome(); }}, 'Start another')));
+  } else {
+    $('#sessionSub').textContent = r.camera_running ? 'start one before you study' : 'needs the camera running';
+    const label = el('input', {type:'text', placeholder:'What are you working on? (optional)', style:'width:100%;max-width:320px', id:'sessLabel'});
+    const pre = el('div', {class:'presets'});
+    for (const m of [25, 50, 90]) pre.append(el('button', {class:'btn primary', disabled: r.camera_running ? null : 'disabled', onclick: async () => { await post('/api/session/start', {minutes: m, label: $('#sessLabel').value}); lastSummary = null; loadHome(); }}, `${m} min`));
+    const custom = el('input', {type:'number', min:1, max:600, value:40, style:'width:70px'}); pre.append(custom, el('button', {class:'btn', disabled: r.camera_running ? null : 'disabled', onclick: async () => { await post('/api/session/start', {minutes: Number(custom.value), label: $('#sessLabel').value}); lastSummary = null; loadHome(); }}, 'Start'));
+    body.append(label, pre, el('p', {class:'muted', style:'margin:6px 0 0'}, 'It scores the stretch when you stop: phone pickups, time on the phone, posture, and the longest clean run.'));
+  }
+  // today
+  const tb = $('#todayBody'); tb.replaceChildren();
+  if (h.today) { const t = h.today; const c = summaryCard(t, `${fmtMin(t.minutes)} at the desk` + (h.yesterday_score != null ? ` · yesterday ${h.yesterday_score}` : '')); tb.append(c); if (h.streaks && h.streaks.phone > 0) tb.append(el('p', {class:'muted', style:'margin:10px 0 0'}, `${h.streaks.phone} day${h.streaks.phone === 1 ? '' : 's'} in a row under your phone goal.`)); }
+  else tb.append(el('p', {class:'muted', style:'margin:0'}, 'Nothing yet today. Once the camera has seen you at the desk, your day appears here.'));
+  // recent sessions
+  const rb = $('#recentBody'); rb.replaceChildren();
+  if (!h.recent_sessions.length) rb.append(el('p', {class:'muted', style:'margin:0'}, 'No finished sessions this week.'));
+  for (const s of h.recent_sessions) { const sum = s.summary || {}; const d = new Date(s.start * 1000); rb.append(el('div', {class:'sess'}, el('span', {class:'chip'}, String(sum.score ?? '–')), el('span', {}, el('b', {}, s.label || 'Session'), el('div', {class:'m'}, `${d.toLocaleDateString(undefined, {weekday:'short'})} ${fmtTime(s.start)} · ${fmtMin((s.end - s.start)/60)} of ${s.planned_minutes} min · ${sum.phone_pickups ?? 0} pickups · clean ${fmtMin(sum.longest_clean_minutes ?? 0)}`)), el('button', {class:'btn ghost', title:'delete', onclick: async () => { await fetch('/api/session/' + s.id, {method:'DELETE'}); loadHome(); }}, '×'))); }
+}
+function startHomeTimer(){ stopHomeTimer(); homeTimer = setInterval(() => { if (tab === 'home') loadHome(); }, 5000); }
+function stopHomeTimer(){ if (homeTimer) clearInterval(homeTimer); homeTimer = null; }
+
+// ---------- today ----------
+$('#dayPick').value = dayDate;
+$('#dayPick').addEventListener('change', (e) => { dayDate = e.target.value; loadToday(); });
+$('#dayPrev').onclick = () => { dayDate = shiftDay(dayDate, -1); $('#dayPick').value = dayDate; loadToday(); };
+$('#dayNext').onclick = () => { dayDate = shiftDay(dayDate, 1); $('#dayPick').value = dayDate; loadToday(); };
+$('#dayToday').onclick = () => { dayDate = todayISO(); $('#dayPick').value = dayDate; loadToday(); };
+$('#tlToggle').onclick = () => { $('#timeline').classList.toggle('hidden'); $('#timelineTable').classList.toggle('hidden'); $('#tlToggle').textContent = $('#timeline').classList.contains('hidden') ? 'chart' : 'table'; };
+
+async function loadToday(){
+  const d = await api('/api/day?date=' + dayDate); lastDay = d;
+  const t = d.totals, y = d.yesterday_totals;
+  const habitMin = ORDER.filter(k => HABITS[k]?.kind === 'duration' && k !== 'absent').reduce((a,k) => a + t[k].minutes, 0);
+  const yHabitMin = ORDER.filter(k => HABITS[k]?.kind === 'duration' && k !== 'absent').reduce((a,k) => a + y[k].minutes, 0);
+  $('#heroDate').textContent = dayDate === todayISO() ? 'today' : `${dayName(dayDate)} ${dayDate}`;
+  $('#heroValue').textContent = fmtMin(habitMin);
+  const share = d.present_minutes ? Math.round(100 * habitMin / d.present_minutes) : 0;
+  $('#heroSub').textContent = d.present_minutes ? `of ${fmtMin(d.present_minutes)} at the desk · ${share}% · yesterday ${fmtMin(yHabitMin)}` : 'no desk time recorded';
+  // tiles
+  const tiles = $('#tiles'); tiles.replaceChildren();
+  const keys = ['phone','slouch','looking_down','hand_to_face','looking_away','drink','yawn','eye_rub','eat','drowsy','restless'];
+  for (const k of keys) {
+    const h = HABITS[k]; if (!h) continue;
+    const isDur = h.kind === 'duration';
+    const v = isDur ? t[k].minutes : t[k].count, pv = isDur ? y[k].minutes : y[k].count;
+    const goal = d.goals[k] || h.goal, ratio = goal ? v / goal : 0;
+    const delta = v - pv;
+    const tile = el('div', {class:'tile'},
+      el('div', {class:'label'}, el('span', {class:'sw', style:`background:${colorOf(k)}`}), h.label),
+      el('div', {class:'value'}, isDur ? fmtMin(v) : String(v)),
+      el('div', {class:'delta ' + (delta > 0.5 ? 'up' : delta < -0.5 ? 'down' : '')}, fmtDelta(delta, isDur) + ' vs yesterday' + (isDur ? ` · ${t[k].count}×` : '')),
+      el('div', {class:'meter' + (ratio > 1 ? ' over' : '')}, el('i', {style:`width:${Math.min(100, ratio*100)}%`})));
+    hover(tile, () => [{b: isDur ? fmtMin(v) : v, t: h.label}, {t: `goal ${isDur ? fmtMin(goal) : goal}/day · ${Math.round(ratio*100)}%`}, {t: h.description}]);
+    tiles.append(tile);
+  }
+  renderTimeline(d);
+}
+
+function renderTimeline(d){
+  const wrap = $('#timeline'); wrap.replaceChildren();
+  const eps = d.episodes;
+  const [Y,M,D] = dayDate.split('-').map(Number); const day0 = new Date(Y, M-1, D).getTime()/1000;
+  let h0 = 7, h1 = 23;
+  for (const e of eps) { h0 = Math.min(h0, Math.floor((e.start - day0)/3600)); h1 = Math.max(h1, Math.ceil((e.end - day0)/3600)); }
+  h0 = Math.max(0, h0); h1 = Math.min(24, h1);
+  const lanes = ORDER.filter(k => HABITS[k]);
+  const W = Math.max(600, wrap.clientWidth || 900), L = 150, R = 12, laneH = 22, T = 22, H = T + lanes.length * laneH + 8;
+  const svg = svgEl('svg', {viewBox:`0 0 ${W} ${H}`, width:'100%', height:H, role:'img', 'aria-label':'Timeline of episodes today'});
+  const x = (ts) => L + ((ts - day0)/3600 - h0) / (h1 - h0) * (W - L - R);
+  for (let h = h0; h <= h1; h++) { const xx = x(day0 + h*3600); svg.append(svgEl('line', {x1:xx, y1:T-4, x2:xx, y2:H-8, class:'grid'})); if ((h - h0) % 2 === 0 || h1 - h0 < 10) { const tx = svgEl('text', {x:xx, y:12, class:'tick', 'text-anchor':'middle'}); tx.textContent = `${String(h).padStart(2,'0')}:00`; svg.append(tx);} }
+  lanes.forEach((k, i) => {
+    const y = T + i * laneH;
+    const lab = svgEl('text', {x:L-10, y:y+laneH/2+4, 'text-anchor':'end'}); lab.textContent = HABITS[k].label.length > 22 ? HABITS[k].label.slice(0,21) + '…' : HABITS[k].label; svg.append(lab);
+    svg.append(svgEl('line', {x1:L, y1:y+laneH, x2:W-R, y2:y+laneH, class:'grid'}));
+    for (const e of eps.filter(e => e.habit === k)) {
+      const x1 = x(Math.max(e.start, day0)), x2 = x(Math.min(e.end, day0 + 86400)); const w = Math.max(3, x2 - x1);
+      const g = svgEl('g'); const hit = svgEl('rect', {x:x1-4, y:y+2, width:w+8, height:laneH-4, fill:'transparent'}); const r = svgEl('rect', {x:x1, y:y+5, width:w, height:laneH-10, rx:3, fill:colorOf(k), opacity: e.label === false ? .25 : .9});
+      g.append(hit, r); hover(g, () => [{b: fmtDur(e.duration), t: HABITS[k].label, color: colorOf(k)}, {t: `${fmtTime(e.start)} – ${fmtTime(e.end)}`}, {t: `confidence ${Math.round(e.confidence*100)}%${e.model_conf != null ? ' · model ' + Math.round(e.model_conf*100) + '%' : ''}${e.label === true ? ' · confirmed' : e.label === false ? ' · rejected' : ''}`}]);
+      g.addEventListener('pointerenter', () => r.setAttribute('opacity', 1)); g.addEventListener('pointerleave', () => r.setAttribute('opacity', .9));
+      svg.append(g);
+    }
+  });
+  wrap.append(svg);
+  const lg = $('#tlLegend'); lg.replaceChildren(); for (const k of lanes) lg.append(el('span', {}, el('span', {class:'sw', style:`background:${colorOf(k)}`}), HABITS[k].label));
+  // table twin
+  const tb = $('#timelineTable'); tb.replaceChildren();
+  const table = el('table', {class:'tbl'}, el('tr', {}, el('th', {}, 'Habit'), el('th', {}, 'Start'), el('th', {}, 'End'), el('th', {class:'n'}, 'Duration'), el('th', {class:'n'}, 'Confidence')));
+  for (const e of eps) table.append(el('tr', {}, el('td', {}, HABITS[e.habit].label), el('td', {}, fmtTime(e.start)), el('td', {}, fmtTime(e.end)), el('td', {class:'n'}, fmtDur(e.duration)), el('td', {class:'n'}, Math.round(e.confidence*100) + '%')));
+  if (!eps.length) table.append(el('tr', {}, el('td', {colspan:5, class:'muted'}, 'no episodes')));
+  tb.append(table);
+}
+
+// ---------- week ----------
+$('#weekEnd').value = weekEndDate;
+$('#weekEnd').addEventListener('change', (e) => { weekEndDate = e.target.value; loadWeek(); });
+$('#heatHabit').addEventListener('change', (e) => { heatHabitKey = e.target.value; if (lastWeek) renderHeat(lastWeek); });
+$('#chartToggle').onclick = () => { $('#theChart').classList.toggle('hidden'); $('#theChartTable').classList.toggle('hidden'); $('#chartToggle').textContent = $('#theChart').classList.contains('hidden') ? 'chart' : 'table'; };
+$('#reportBtn').onclick = async () => { $('#reportBtn').disabled = true; $('#reportBtn').textContent = 'Building…'; try { const rep = await api(`/api/report/week?end=${weekEndDate}&roast=${status.config?.roast_enabled ? 'true' : 'false'}&refresh=true`); renderReport(rep); } catch (e) { alert(e.message); } $('#reportBtn').disabled = false; $('#reportBtn').textContent = 'Build weekly report'; };
+
+async function loadWeek(){
+  const w = await api('/api/week?end=' + weekEndDate); lastWeek = w;
+  const durKeys = ORDER.filter(k => HABITS[k]?.kind === 'duration' && k !== 'absent');
+  const sum = (days, k, f) => days.reduce((a, d) => a + d.totals[k][f], 0);
+  // the chart: single series, sorted
+  const rows = durKeys.map(k => ({k, v: sum(w.days, k, 'minutes'), pv: sum(w.prev_days, k, 'minutes')})).sort((a,b) => b.v - a.v);
+  const wrap = $('#theChart'); wrap.replaceChildren();
+  const W = Math.max(600, wrap.clientWidth || 900), L = 190, R = 70, bh = 18, gap = 10, H = rows.length * (bh + gap) + 8;
+  const max = Math.max(1, ...rows.map(r => r.v));
+  const svg = svgEl('svg', {viewBox:`0 0 ${W} ${H}`, width:'100%', height:H, role:'img', 'aria-label':'Minutes per habit this week'});
+  const xs = (v) => L + v / max * (W - L - R);
+  for (const tv of niceTicks(max, 4)) { const xx = xs(tv); svg.append(svgEl('line', {x1:xx, y1:0, x2:xx, y2:H-8, class:'grid'})); }
+  svg.append(svgEl('line', {x1:L, y1:0, x2:L, y2:H-8, class:'axis'}));
+  rows.forEach((r, i) => {
+    const y = i * (bh + gap) + 4;
+    const lab = svgEl('text', {x:L-10, y:y+bh/2+4, 'text-anchor':'end'}); lab.textContent = HABITS[r.k].label; svg.append(lab);
+    const w = xs(r.v) - L; const g = svgEl('g');
+    const hit = svgEl('rect', {x:L, y:y-4, width:W-L, height:bh+8, fill:'transparent'});
+    const bar = svgEl('path', {d: roundedRight(L, y, Math.max(w, r.v > 0 ? 2 : 0), bh, 4), fill:'var(--s1)'});
+    const val = svgEl('text', {x: L + w + 8, y: y+bh/2+4, class:'tick'}); val.textContent = fmtMin(r.v);
+    g.append(hit, bar, val); hover(g, () => [{b: fmtMin(r.v), t: HABITS[r.k].label, color:'var(--s1)'}, {t: `last week ${fmtMin(r.pv)} (${r.v - r.pv >= 0 ? '+' : '−'}${fmtMin(Math.abs(r.v - r.pv))})`}, {t: `≈ ${Math.round(r.v * 52 / 60)} hours a year at this rate`}]);
+    g.addEventListener('pointerenter', () => bar.setAttribute('opacity', .8)); g.addEventListener('pointerleave', () => bar.setAttribute('opacity', 1));
+    svg.append(g);
+  });
+  wrap.append(svg);
+  const top = rows[0];
+  const counts = ORDER.filter(k => HABITS[k]?.kind === 'count').map(k => `${sum(w.days, k, 'count')} ${HABITS[k].label.toLowerCase()}`).join(' · ');
+  $('#chartNote').textContent = top && top.v > 0 ? `${HABITS[top.k].label}: ${fmtMin(top.v)} this week. At this rate that is ${Math.round(top.v * 52 / 60)} hours a year. Also: ${counts}.` : 'No habits logged this week yet.';
+  const tb = $('#theChartTable'); tb.replaceChildren();
+  const table = el('table', {class:'tbl'}, el('tr', {}, el('th', {}, 'Habit'), el('th', {class:'n'}, 'This week'), el('th', {class:'n'}, 'Last week'), el('th', {class:'n'}, 'Per year')));
+  for (const r of rows) table.append(el('tr', {}, el('td', {}, HABITS[r.k].label), el('td', {class:'n'}, fmtMin(r.v)), el('td', {class:'n'}, fmtMin(r.pv)), el('td', {class:'n'}, Math.round(r.v*52/60) + ' h')));
+  tb.append(table);
+  // small multiples
+  const sm = $('#smallMultiples'); sm.replaceChildren();
+  for (const k of ORDER.filter(k => HABITS[k] && k !== 'absent')) {
+    const h = HABITS[k], isDur = h.kind === 'duration';
+    const vals = w.days.map(d => isDur ? d.totals[k].minutes : d.totals[k].count);
+    const total = vals.reduce((a,b) => a+b, 0);
+    const goal = w.goals[k] || h.goal;
+    const panel = el('div', {class:'sm'}, el('h3', {}, el('span', {class:'sw', style:`background:${colorOf(k)}`}), h.label), el('div', {class:'v'}, isDur ? fmtMin(total) : String(total)));
+    const PW = 180, PH = 84, pad = 4, top0 = 16, bw = 16, step = PW / 7;
+    const mx = Math.max(goal, ...vals, 1);
+    const s = svgEl('svg', {viewBox:`0 0 ${PW} ${PH+16}`, width:'100%', height:PH+16, role:'img', 'aria-label': h.label + ' per day'});
+    const ys = (v) => PH - pad - v / mx * (PH - pad - top0);
+    s.append(svgEl('line', {x1:0, y1:ys(goal), x2:PW, y2:ys(goal), class:'axis'}));
+    s.append(svgEl('line', {x1:0, y1:PH-pad, x2:PW, y2:PH-pad, class:'grid'}));
+    const imax = vals.indexOf(Math.max(...vals));
+    vals.forEach((v, i) => {
+      const cx = i*step + step/2, top = ys(v), hgt = PH - pad - top;
+      const g = svgEl('g'); const hit = svgEl('rect', {x:cx-step/2, y:0, width:step, height:PH+16, fill:'transparent'});
+      const bar = svgEl('path', {d: roundedTop(cx - bw/2, top, bw, Math.max(hgt, v > 0 ? 2 : 0), 4), fill: colorOf(k)});
+      const dl = svgEl('text', {x:cx, y:PH+12, class:'tick', 'text-anchor':'middle'}); dl.textContent = dayName(w.days[i].date)[0];
+      g.append(hit, bar, dl);
+      if (i === imax && v > 0) { const t = svgEl('text', {x:cx, y:top-5, class:'tick', 'text-anchor':'middle'}); t.textContent = isDur ? fmtMin(v) : v; g.append(t); }
+      hover(g, () => [{b: isDur ? fmtMin(v) : v, t: `${dayName(w.days[i].date)} ${w.days[i].date}`, color: colorOf(k)}, {t: `goal ${isDur ? fmtMin(goal) : goal} · desk ${fmtMin(w.days[i].present_minutes)}`}]);
+      s.append(g);
+    });
+    panel.append(s); sm.append(panel);
+  }
+  // heat + streaks
+  const sel = $('#heatHabit'); if (!sel.children.length) for (const k of ORDER.filter(k => HABITS[k])) sel.append(el('option', {value:k}, HABITS[k].label)); sel.value = heatHabitKey;
+  renderHeat(w);
+  const st = $('#streaks'); st.replaceChildren();
+  for (const k of ORDER.filter(k => HABITS[k] && k !== 'absent')) st.append(el('div', {class:'streak'}, el('b', {}, String(w.streaks[k] || 0)), `${HABITS[k].label}`));
+}
+function renderHeat(w){
+  const k = heatHabitKey, h = HABITS[k], isDur = h.kind === 'duration';
+  const grid = w.heatmap[k]; const wrap = $('#heatmap'); wrap.replaceChildren();
+  const W = Math.max(600, wrap.clientWidth || 900), L = 50, T = 18, cw = (W - L - 8) / 24, ch = 22;
+  const mx = Math.max(1, ...grid.flat());
+  const ramp = ['--seq1','--seq2','--seq3','--seq4','--seq5','--seq6','--seq7'];
+  const svg = svgEl('svg', {viewBox:`0 0 ${W} ${T + 7*ch + 6}`, width:'100%', height:T + 7*ch + 6, role:'img', 'aria-label': h.label + ' by hour and day'});
+  for (let hh = 0; hh < 24; hh += 3) { const t = svgEl('text', {x:L + hh*cw + 2, y:12, class:'tick'}); t.textContent = `${String(hh).padStart(2,'0')}`; svg.append(t); }
+  grid.forEach((row, di) => {
+    const lab = svgEl('text', {x:L-8, y:T + di*ch + ch/2 + 4, 'text-anchor':'end'}); lab.textContent = dayName(w.days[di].date); svg.append(lab);
+    row.forEach((v, hh) => {
+      const idx = v <= 0 ? -1 : Math.min(6, Math.floor(v / mx * 6.999));
+      const r = svgEl('rect', {x: L + hh*cw + 1, y: T + di*ch + 1, width: cw-2, height: ch-2, rx:3, fill: idx < 0 ? 'var(--wash)' : `var(${ramp[idx]})`});
+      hover(r, () => [{b: isDur ? fmtMin(v) : v + '×', t: h.label}, {t: `${dayName(w.days[di].date)} ${w.days[di].date} · ${String(hh).padStart(2,'0')}:00–${String(hh+1).padStart(2,'0')}:00`}]);
+      svg.append(r);
+    });
+  });
+  wrap.append(svg);
+  const by = Array.from({length:24}, (_, hh) => grid.reduce((a, row) => a + row[hh], 0)); const worst = by.indexOf(Math.max(...by));
+  $('#heatTitle').textContent = Math.max(...by) > 0 ? `${h.label.toLowerCase()} peaks at ${String(worst).padStart(2,'0')}:00` : '';
+}
+function renderReport(rep){
+  const c = $('#reportCard'); c.classList.remove('hidden'); const b = $('#reportBody'); b.replaceChildren();
+  const worst = rep.habits.filter(h => h.kind === 'duration' && h.key !== 'absent').sort((a,b) => b.minutes - a.minutes)[0];
+  b.append(el('p', {}, `${rep.start} to ${rep.end} · ${fmtMin(rep.present_minutes)} at the desk · ${rep.habit_share != null ? Math.round(rep.habit_share*100) + '% of it in a logged habit' : ''}`));
+  if (worst && worst.minutes > 0) b.append(el('p', {}, el('b', {}, `${fmtMin(worst.minutes)} `), `${worst.label.toLowerCase()}. About ${worst.per_year_hours} hours a year at this rate.`));
+  if (rep.roast) b.append(el('blockquote', {}, rep.roast)); else if (rep.roast_error) b.append(el('p', {class:'muted'}, 'No written summary: ' + rep.roast_error));
+  b.append(el('p', {class:'muted'}, 'Saved to ' + rep.path));
+  c.scrollIntoView({behavior:'smooth'});
+}
+function niceTicks(max, n){ const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))), s = [1,2,5,10].map(m => m*p).find(v => v >= raw) || p; const out = []; for (let v = s; v <= max; v += s) out.push(v); return out; }
+function roundedRight(x, y, w, h, r){ r = Math.min(r, w/2, h/2); return `M${x},${y} H${x+w-r} a${r},${r} 0 0 1 ${r},${r} V${y+h-r} a${r},${r} 0 0 1 -${r},${r} H${x} Z`; }
+function roundedTop(x, y, w, h, r){ r = Math.min(r, w/2, h/2); return `M${x},${y+h} V${y+r} a${r},${r} 0 0 1 ${r},-${r} H${x+w-r} a${r},${r} 0 0 1 ${r},${r} V${y+h} Z`; }
+
+// ---------- review ----------
+$('#trainBtn').onclick = async () => { $('#trainBtn').disabled = true; try { const r = await post('/api/train'); $('#trainBtn').textContent = r.ok ? 'Training…' : 'Could not start'; } catch (e) { $('#trainBtn').textContent = 'Failed'; } setTimeout(() => { $('#trainBtn').disabled = false; $('#trainBtn').textContent = 'Train model now'; loadReview(); }, 4000); };
+document.addEventListener('keydown', (e) => { if (tab !== 'review' || e.target.tagName === 'INPUT') return; const cards = [...document.querySelectorAll('.rv')]; const c = cards[reviewFocus]; if (!c) return; if (e.key === 'y') label(c.dataset.id, true); else if (e.key === 'n') label(c.dataset.id, false); else if (e.key === 's') { reviewFocus = Math.min(cards.length-1, reviewFocus+1); focusCard(); } });
+function focusCard(){ document.querySelectorAll('.rv').forEach((c, i) => c.classList.toggle('focus', i === reviewFocus)); }
+async function label(id, val){ await post('/api/label', {id: Number(id), label: val}); loadReview(); pollStatus(); if (lastDay) loadToday(); }
+async function loadReview(){
+  const items = await api('/api/review?limit=12'); const g = $('#reviewGrid'); g.replaceChildren(); reviewFocus = 0;
+  $('#reviewEmpty').classList.toggle('hidden', items.length > 0);
+  for (const it of items) {
+    const card = el('div', {class:'rv', 'data-id': it.id});
+    card.append(el('div', {}, el('span', {class:'sw', style:`background:${colorOf(it.habit)};margin-right:6px`}), el('b', {}, it.label_text)));
+    card.append(el('div', {class:'meta'}, `${it.when} · ${fmtDur(it.duration)} · ${Math.round(it.confidence*100)}% sure${it.model_conf != null ? ` · model ${Math.round(it.model_conf*100)}%` : ''}`));
+    const strip = el('div', {class:'strip'}); for (const u of it.thumbs) strip.append(el('img', {src: u, alt: 'frame'})); card.append(strip);
+    card.append(el('div', {class:'actions'}, el('button', {class:'btn primary', onclick: () => label(it.id, true)}, 'Yes, it was'), el('button', {class:'btn', onclick: () => label(it.id, false)}, 'No, wrong')));
+    card.addEventListener('click', () => { reviewFocus = [...g.children].indexOf(card); focusCard(); });
+    g.append(card);
+  }
+  focusCard();
+  const l = status.labels || {}; $('#labelStats').textContent = `${l.confirmed || 0} confirmed · ${l.rejected || 0} rejected · ${l.pending || 0} waiting`;
+  const mi = $('#modelInfo'); mi.replaceChildren();
+  const info = status.model_info || {}, lt = status.last_train;
+  const kv = [['Status', status.model_ready ? 'trained model active' : 'rules only (no trained model yet)'], ['Feature rows stored', String(status.features_stored || 0)], ['Last training', lt ? `${new Date(lt.ts*1000).toLocaleString()} · ${lt.n_windows} windows · ${lt.n_human} human labels · ${lt.seconds}s on ${lt.device}` : 'never'], ['Blend weight', String(status.config?.model_blend ?? '')]];
+  if (info.metrics) for (const [k, m] of Object.entries(info.metrics)) kv.push([HABITS[k]?.label || k, `AUC ${m.auc} · precision ${m.precision} · recall ${m.recall}`]);
+  for (const [k, v] of kv) mi.append(el('span', {}, k), el('b', {}, v));
+}
+
+// ---------- live ----------
+$('#pauseBtn').onclick = async () => { const r = await post('/api/pause', {paused: !status.paused}); $('#pauseBtn').textContent = r.paused ? 'Resume' : 'Pause'; pollStatus(); };
+$('#calBtn').onclick = async () => { await post('/api/calibrate', {seconds: 10}); $('#calText').textContent = 'Sit upright and look at the screen…'; };
+let previewTimer = null;
+function renderLive(){
+  const s = status; $('#pauseBtn').textContent = s.paused ? 'Resume' : 'Pause'; $('#pauseBtn').disabled = $('#calBtn').disabled = !s.running;
+  const sc = $('#scores'); sc.replaceChildren();
+  for (const k of ORDER.filter(k => HABITS[k])) { const h = s.habits?.[k] || {score:0}; const r = s.rule_scores?.[k] ?? 0, m = s.model_scores?.[k]; sc.append(el('div', {class:'row' + (h.active ? ' active' : '')}, el('span', {}, el('span', {class:'sw', style:`background:${colorOf(k)};margin-right:6px`}), HABITS[k].label), el('div', {class:'meter'}, el('i', {style:`width:${Math.round(h.score*100)}%`})), el('span', {class:'n', title: `rule ${r}${m != null ? ' · model ' + m : ''}`}, Math.round(h.score*100) + '%'))); }
+  const kv = $('#liveKv'); kv.replaceChildren();
+  const f = s.features || {};
+  const pairs = [['Camera', s.running ? `${s.fps} fps · ${s.latency_ms} ms · ${s.mode}` : (s.error || 'off')], ['Person', s.present ? `present · face ${s.face ? 'yes' : 'no'} · hands ${s.hands} · pose ${s.pose ? 'yes' : 'no'}` : 'nobody'], ['Head', `pitch ${f.pitch ?? '–'}° · yaw ${f.yaw ?? '–'}°`], ['Posture', s.calibrated ? `${f.posture_dev} (z vs baseline)` : 'not calibrated'], ['Objects', (s.objects || []).map(o => `${o.name} ${o.conf}`).join(', ') || 'none'], ['Model', s.model_ready ? 'trained model blended in' : 'rules only'], ['Uptime', s.uptime_s ? fmtDur(s.uptime_s) : '–']];
+  for (const [k, v] of pairs) kv.append(el('span', {}, k), el('b', {}, v));
+  const cp = $('#calProgress'); if (s.calibrating) { cp.classList.remove('hidden'); cp.firstChild.style.width = Math.round((s.calibration_progress||0)*100) + '%'; $('#calText').textContent = 'Calibrating… hold still, sit upright'; } else { cp.classList.add('hidden'); if ($('#calText').textContent.startsWith('Calibrating')) $('#calText').textContent = s.calibrated ? 'Baseline saved.' : 'Calibration failed: face not visible enough.'; }
+}
+function startPreview(){ stopPreview(); const img = $('#preview'), msg = $('#previewMsg');
+  img.onload = () => { img.classList.remove('hidden'); msg.classList.add('hidden'); };
+  img.onerror = () => { img.classList.add('hidden'); msg.classList.remove('hidden'); msg.textContent = status.running ? 'Waiting for the first frame…' : 'Camera is not running.'; };
+  const tick = () => { if (tab !== 'live') return; if (!status.running || !status.config?.preview) { img.classList.add('hidden'); msg.classList.remove('hidden'); msg.textContent = !status.running ? 'Camera is not running. Start it with `caught run`.' : 'Preview is turned off in Settings.'; return; } img.src = '/api/preview.jpg?t=' + Date.now(); };
+  previewTimer = setInterval(tick, 500); tick(); }
+function stopPreview(){ if (previewTimer) clearInterval(previewTimer); previewTimer = null; }
+
+// ---------- settings ----------
+$('#setBlend').addEventListener('input', (e) => $('#blendVal').textContent = e.target.value);
+async function loadSettings(){
+  const s = await api('/api/settings');
+  $('#setClips').checked = s.store_review_clips; $('#setPreview').checked = s.preview_in_dashboard; $('#setNotif').checked = s.notifications; $('#setRoast').checked = s.roast_enabled;
+  $('#setBlend').value = s.model_blend; $('#blendVal').textContent = s.model_blend; $('#setRetention').value = s.retention_days;
+  const g = $('#goals'); g.replaceChildren();
+  for (const k of ORDER.filter(k => HABITS[k])) g.append(el('label', {}, el('span', {}, `${HABITS[k].label} (${HABITS[k].kind === 'duration' ? 'min' : 'count'})`), el('input', {type:'number', min:0, step:1, 'data-goal': k, value: s.goals[k]})));
+}
+$('#saveSettings').onclick = async () => {
+  const goals = {}; for (const i of document.querySelectorAll('[data-goal]')) goals[i.dataset.goal] = Number(i.value);
+  await post('/api/settings', {store_review_clips: $('#setClips').checked, preview_in_dashboard: $('#setPreview').checked, notifications: $('#setNotif').checked, roast_enabled: $('#setRoast').checked, model_blend: Number($('#setBlend').value), retention_days: Number($('#setRetention').value), goals});
+  $('#saveMsg').textContent = 'Saved.'; setTimeout(() => $('#saveMsg').textContent = '', 2000); pollStatus();
+};
+$('#wipeBtn').onclick = async () => { const v = prompt('This deletes every episode, feature row, and review clip. Type "wipe" to confirm.'); if (v !== 'wipe') return; await post('/api/wipe', {confirm:'wipe'}); location.reload(); };
+
+// ---------- boot ----------
+async function refresh(){
+  try {
+    if (tab === 'home') { await loadHome(); startHomeTimer(); }
+    else if (tab === 'today') await loadToday();
+    else if (tab === 'week') await loadWeek();
+    else if (tab === 'review') await loadReview();
+    else if (tab === 'live') { renderLive(); startPreview(); }
+    else if (tab === 'settings') await loadSettings();
+    if (tab !== 'live') stopPreview();
+    if (tab !== 'home') stopHomeTimer();
+  } catch (e) { console.error(e); }
+}
+(async () => {
+  HABITS = await api('/api/habits');
+  await pollStatus(); await refresh();
+  setInterval(pollStatus, 2000);
+  setInterval(() => { if (tab === 'today' && dayDate === todayISO()) loadToday(); }, 30000);
+  addEventListener('resize', () => { if (tab === 'today' && lastDay) renderTimeline(lastDay); if (tab === 'week' && lastWeek) loadWeek(); });
+})();
+})();
+</script>
+</body>
+</html>
