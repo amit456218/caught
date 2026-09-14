@@ -1,0 +1,267 @@
+{
+ "items": [
+  {
+   "file": "boy_asleep_desk.mp4",
+   "expect": [],
+   "reject": [
+    "phone",
+    "eat"
+   ],
+   "expect_any": [
+    "hand_to_face",
+    "eye_rub",
+    "drowsy"
+   ]
+  },
+  {
+   "file": "boy_rubs_eyes.mp4",
+   "expect": [],
+   "reject": [
+    "phone",
+    "looking_down"
+   ],
+   "expect_any": [
+    "eye_rub",
+    "hand_to_face"
+   ]
+  },
+  {
+   "file": "girl_book_falls_asleep.mp4",
+   "expect": [
+    "drowsy"
+   ],
+   "reject": [
+    "phone"
+   ],
+   "optional": true,
+   "note": "reading vs dozing is ambiguous from blendshapes alone"
+  },
+  {
+   "file": "hands_phone_desk.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": [],
+   "optional": true,
+   "note": "top-down hands only, no face"
+  },
+  {
+   "file": "man_answering_whatsapp.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": []
+  },
+  {
+   "file": "man_coffee_computer.mp4",
+   "expect": [
+    "drink"
+   ],
+   "reject": [
+    "hand_to_face",
+    "phone"
+   ]
+  },
+  {
+   "file": "man_laptop_study.mp4",
+   "expect": [],
+   "reject": [
+    "phone",
+    "hand_to_face",
+    "drink",
+    "looking_down",
+    "drowsy",
+    "eat"
+   ]
+  },
+  {
+   "file": "man_street_typing_phone.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": [
+    "drowsy"
+   ]
+  },
+  {
+   "file": "man_texting_happy.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": [
+    "eat"
+   ]
+  },
+  {
+   "file": "man_working_computer.mp4",
+   "expect": [
+    "drink"
+   ],
+   "reject": [
+    "hand_to_face",
+    "phone"
+   ]
+  },
+  {
+   "file": "office_yawn_portrait.mp4",
+   "expect": [
+    "yawn"
+   ],
+   "reject": [
+    "drowsy",
+    "hand_to_face"
+   ]
+  },
+  {
+   "file": "sleepy_girl_phone.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": [
+    "drink"
+   ]
+  },
+  {
+   "file": "staff_eating_desk.mp4",
+   "expect": [
+    "eat"
+   ],
+   "reject": [
+    "drowsy",
+    "phone"
+   ],
+   "optional": true,
+   "note": "a single bite in 27 s at an oblique wide angle; eating needs repeated bites"
+  },
+  {
+   "file": "tired_boy_studying.mp4",
+   "expect": [
+    "hand_to_face"
+   ],
+   "reject": [
+    "phone",
+    "eat"
+   ]
+  },
+  {
+   "file": "tired_student_college.mp4",
+   "expect": [
+    "hand_to_face"
+   ],
+   "reject": [
+    "phone",
+    "eat"
+   ]
+  },
+  {
+   "file": "tired_student_library.mp4",
+   "expect": [
+    "eye_rub"
+   ],
+   "reject": [
+    "phone"
+   ]
+  },
+  {
+   "file": "woman_coffee_laptop.mp4",
+   "expect": [
+    "drink"
+   ],
+   "reject": [
+    "hand_to_face",
+    "phone"
+   ]
+  },
+  {
+   "file": "woman_laptop_bed_asleep.mp4",
+   "expect": [],
+   "reject": [
+    "phone",
+    "eat"
+   ]
+  },
+  {
+   "file": "woman_on_call_working.mp4",
+   "expect": [
+    "phone"
+   ],
+   "reject": [
+    "hand_to_face"
+   ],
+   "optional": true,
+   "note": "side view of a phone call; not a webcam angle"
+  },
+  {
+   "file": "woman_yawn_pink.mp4",
+   "expect": [
+    "yawn"
+   ],
+   "reject": [
+    "drowsy",
+    "eat"
+   ]
+  },
+  {
+   "file": "chin_0.jpg",
+   "expect": [],
+   "reject": [
+    "phone"
+   ]
+  },
+  {
+   "file": "phone_desk_0.jpg",
+   "expect": [
+    "phone"
+   ],
+   "reject": [],
+   "optional": true,
+   "note": "no face in frame"
+  },
+  {
+   "file": "phone_desk_1.jpg",
+   "expect": [],
+   "reject": [
+    "phone"
+   ]
+  },
+  {
+   "file": "phone_look_0.jpg",
+   "expect": [
+    "looking_down"
+   ],
+   "reject": []
+  },
+  {
+   "file": "phone_look_1.jpg",
+   "expect": [
+    "phone"
+   ],
+   "reject": []
+  },
+  {
+   "file": "phone_look_2.jpg",
+   "expect": [
+    "phone"
+   ],
+   "reject": []
+  },
+  {
+   "file": "typing_0.jpg",
+   "expect": [],
+   "reject": [
+    "phone"
+   ]
+  },
+  {
+   "file": "yawn_0.jpg",
+   "expect": [
+    "yawn"
+   ],
+   "reject": [
+    "eat"
+   ],
+   "optional": true,
+   "note": "a baby, not a desk scene; jaw opening sits right at threshold"
+  }
+ ]
+}
